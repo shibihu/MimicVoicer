@@ -1,0 +1,75 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String       @id @default(uuid())
+  email     String       @unique
+  name      String?
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  projects  Project[]
+  assets    AudioAsset[]
+}
+
+model Project {
+  id                   String              @id @default(uuid())
+  userId               String
+  user                 User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name                 String
+  originalAudioAssetId String?
+  duration             Float               @default(0)
+  language             String              @default("auto")
+  status               String              @default("draft")
+  createdAt            DateTime            @default(now())
+  updatedAt            DateTime            @updatedAt
+  assets               AudioAsset[]
+  segments             TranscriptSegment[]
+  jobs                 TranscriptionJob[]
+}
+
+model AudioAsset {
+  id               String   @id @default(uuid())
+  userId           String
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId        String?
+  project          Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  originalFilename String
+  storageKey       String
+  mimeType         String
+  fileSize         Int
+  duration         Float    @default(0)
+  assetType        String   @default("original")
+  createdAt        DateTime @default(now())
+}
+
+model TranscriptSegment {
+  id         String   @id @default(uuid())
+  projectId  String
+  project    Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  startTime  Float
+  endTime    Float
+  text       String
+  confidence Float?
+  orderIndex Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model TranscriptionJob {
+  id           String    @id @default(uuid())
+  projectId    String
+  project      Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  status       String    @default("pending")
+  provider     String    @default("whisper")
+  errorMessage String?
+  startedAt    DateTime?
+  completedAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+}
