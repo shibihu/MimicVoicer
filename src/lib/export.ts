@@ -69,3 +69,10 @@ export function generateJSON(segments: SegmentExport[], metadata?: Record<string
     2
   );
 }
+
+export const exportToTXT = generateTXT;
+export const exportToSRT = generateSRT;
+export const exportToVTT = generateVTT;
+export function exportToJSON(projectName: string, segments: SegmentExport[], language?: string): string {
+  return generateJSON(segments, { projectName, language });
+}

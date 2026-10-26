@@ -82,3 +82,5 @@ export async function deleteFile(storageKey: string): Promise<void> {
     await unlink(filePath);
   }
 }
+
+export const getAbsolutePath = getFilePath;

@@ -11,3 +11,18 @@ export const prisma =
   });
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+
+export async function getOrCreateDefaultUser() {
+  const existing = await prisma.user.findFirst({
+    where: { email: 'default@mimicvoicer.studio' },
+  });
+
+  if (existing) return existing;
+
+  return await prisma.user.create({
+    data: {
+      email: 'default@mimicvoicer.studio',
+      name: 'Default Studio User',
+    },
+  });
+}
