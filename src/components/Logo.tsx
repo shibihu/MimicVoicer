@@ -3,22 +3,23 @@ import Link from 'next/link';
 
 export function Logo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
   const iconSizes = {
-    sm: 'w-6 h-6',
-    md: 'w-8 h-8',
-    lg: 'w-10 h-10',
+    sm: 'w-5 h-5',
+    md: 'w-7 h-7',
+    lg: 'w-9 h-9',
   };
 
   const textSizes = {
-    sm: 'text-lg',
-    md: 'text-xl',
+    sm: 'text-base',
+    md: 'text-lg',
     lg: 'text-2xl',
   };
 
   return (
-    <Link href="/" className="inline-flex items-center gap-2.5 group focus:outline-none">
-      <div className={`relative flex items-center justify-center rounded-xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-blue-500 p-2 shadow-lg shadow-purple-900/20 group-hover:shadow-purple-600/30 transition-all duration-300`}>
+    <Link href="/" className="inline-flex items-center gap-3 group focus:outline-none">
+      <div className="relative flex items-center justify-center rounded-2xl bg-gradient-to-tr from-purple-600 via-indigo-600 to-blue-500 p-2.5 shadow-lg shadow-purple-950/50 group-hover:shadow-purple-600/40 transition-all duration-300">
+        <div className="absolute inset-0 rounded-2xl bg-purple-500/20 blur-md group-hover:blur-lg transition-all" />
         <svg
-          className={`${iconSizes[size]} text-white`}
+          className={`${iconSizes[size]} text-white relative z-10`}
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
@@ -35,8 +36,11 @@ export function Logo({ size = 'md' }: { size?: 'sm' | 'md' | 'lg' }) {
         </svg>
       </div>
       <div className="flex flex-col">
-        <span className={`${textSizes[size]} font-extrabold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent`}>
-          Mimic<span className="text-purple-400 font-black">Voicer</span>
+        <span className={`${textSizes[size]} font-black tracking-tight bg-gradient-to-r from-white via-slate-100 to-slate-300 bg-clip-text text-transparent`}>
+          Mimic<span className="text-purple-400">Voicer</span>
+        </span>
+        <span className="text-[10px] font-bold tracking-widest uppercase text-purple-400/80 -mt-1 font-mono">
+          Audio Studio
         </span>
       </div>
     </Link>

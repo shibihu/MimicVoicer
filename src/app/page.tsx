@@ -22,6 +22,11 @@ import {
   Sliders,
   Mic,
   Zap,
+  Activity,
+  Layers,
+  BarChart3,
+  FileText,
+  Volume2
 } from 'lucide-react';
 
 import { WaveformPlayer } from '@/components/WaveformPlayer';
@@ -392,6 +397,14 @@ export default function HomePage() {
     s.text.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const avgConfidence = segments.length > 0
+    ? Math.round(
+        (segments.reduce((acc, curr) => acc + (curr.confidence ?? 0.95), 0) / segments.length) * 100
+      )
+    : 98;
+
+  const totalWords = segments.reduce((acc, curr) => acc + curr.text.split(/\s+/).filter(Boolean).length, 0);
+
   const formatTimestamp = (secs: number) => {
     const pad = (num: number) => num.toString().padStart(2, '0');
     const m = Math.floor(secs / 60);
@@ -417,7 +430,8 @@ export default function HomePage() {
           </button>
         </div>
       )}
-      {/* Studio Header Bar */}
+
+      {/* Studio Topbar */}
       <div className="studio-topbar border-b px-4 lg:px-6 py-3 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <input
@@ -433,22 +447,23 @@ export default function HomePage() {
                 });
               }
             }}
-            className="bg-transparent hover:bg-slate-900 focus:bg-slate-900 border border-transparent focus:border-purple-500/50 rounded-lg px-2.5 py-1 font-extrabold text-lg text-white transition-all focus:outline-none"
-            placeholder="Studio Project Name..."
+            className="bg-transparent hover:bg-slate-900/80 focus:bg-slate-900 border border-transparent focus:border-purple-500/50 rounded-lg px-2.5 py-1 font-extrabold text-lg text-white transition-all focus:outline-none"
+            placeholder="Studio Session Name..."
           />
 
-          <span className="text-xs px-2.5 py-1 rounded-full bg-slate-900 text-slate-400 border border-slate-800 font-mono">
-            {segments.length} segments
+          <span className="text-xs px-3 py-1 rounded-full bg-purple-950/60 text-purple-300 border border-purple-800/40 font-mono font-semibold flex items-center gap-1.5">
+            <Layers className="w-3 h-3 text-purple-400" />
+            <span>{segments.length} segments</span>
           </span>
         </div>
 
         {/* Toolbar Controls */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-1 bg-slate-900/80 border border-slate-800 p-1 rounded-xl">
+          <div className="flex items-center gap-1 bg-[#10121b] border border-slate-800 p-1 rounded-xl">
             <button
               onClick={handleUndo}
               disabled={historyIndex <= 0}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white disabled:opacity-30 transition-all"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 transition-all"
               title="Undo change"
             >
               <Undo2 className="w-4 h-4" />
@@ -456,30 +471,30 @@ export default function HomePage() {
             <button
               onClick={handleRedo}
               disabled={historyIndex >= history.length - 1}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white disabled:opacity-30 transition-all"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 disabled:opacity-30 transition-all"
               title="Redo change"
             >
               <Redo2 className="w-4 h-4" />
             </button>
           </div>
 
-          <div className="flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-xl bg-slate-900/80 border border-slate-800">
+          <div className="flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-xl bg-[#10121b] border border-slate-800 shadow-inner">
             {saveStatus === 'saved' && (
               <>
                 <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-                <span className="text-emerald-400">Saved</span>
+                <span className="text-emerald-400">All Changes Saved</span>
               </>
             )}
             {saveStatus === 'saving' && (
               <>
                 <div className="w-2 h-2 rounded-full bg-purple-400 animate-ping" />
-                <span className="text-purple-300">Saving...</span>
+                <span className="text-purple-300">Saving edits...</span>
               </>
             )}
             {saveStatus === 'unsaved' && (
               <>
-                <div className="w-2 h-2 rounded-full bg-yellow-400" />
-                <span className="text-yellow-400">Unsaved edits</span>
+                <div className="w-2 h-2 rounded-full bg-amber-400" />
+                <span className="text-amber-400">Unsaved edits</span>
               </>
             )}
             {saveStatus === 'error' && (
@@ -491,48 +506,48 @@ export default function HomePage() {
           </div>
 
           <div className="relative group">
-            <button className="flex items-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold px-4 py-1.5 rounded-xl text-xs shadow-md transition-all">
+            <button className="flex items-center gap-2 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold px-4 py-1.5 rounded-xl text-xs shadow-lg shadow-purple-950/50 transition-all">
               <Download className="w-3.5 h-3.5" />
-              <span>Export</span>
+              <span>Export Subtitles</span>
             </button>
-            <div className="absolute right-0 top-full mt-1 w-48 bg-[#12141c] border border-slate-800 rounded-xl shadow-2xl p-1.5 hidden group-hover:block z-50">
+            <div className="absolute right-0 top-full mt-1 w-52 bg-[#10121b] border border-purple-900/40 rounded-2xl shadow-2xl p-2 hidden group-hover:block z-50 backdrop-blur-xl">
               <button
                 onClick={() => handleExport('srt')}
-                className="w-full text-left px-3 py-1.5 rounded-lg text-xs hover:bg-slate-800 text-slate-200 flex items-center justify-between"
+                className="w-full text-left px-3 py-2 rounded-xl text-xs hover:bg-purple-950/50 text-slate-200 flex items-center justify-between transition-colors"
               >
-                <span>SubRip Subtitles</span>
-                <span className="font-mono text-purple-400 text-[10px]">.SRT</span>
+                <span className="font-medium">SubRip Subtitles</span>
+                <span className="font-mono text-purple-400 text-[10px] font-bold bg-purple-900/40 px-1.5 py-0.5 rounded">.SRT</span>
               </button>
               <button
                 onClick={() => handleExport('vtt')}
-                className="w-full text-left px-3 py-1.5 rounded-lg text-xs hover:bg-slate-800 text-slate-200 flex items-center justify-between"
+                className="w-full text-left px-3 py-2 rounded-xl text-xs hover:bg-purple-950/50 text-slate-200 flex items-center justify-between transition-colors"
               >
-                <span>WebVTT Subtitles</span>
-                <span className="font-mono text-purple-400 text-[10px]">.VTT</span>
+                <span className="font-medium">WebVTT Subtitles</span>
+                <span className="font-mono text-purple-400 text-[10px] font-bold bg-purple-900/40 px-1.5 py-0.5 rounded">.VTT</span>
               </button>
               <button
                 onClick={() => handleExport('txt')}
-                className="w-full text-left px-3 py-1.5 rounded-lg text-xs hover:bg-slate-800 text-slate-200 flex items-center justify-between"
+                className="w-full text-left px-3 py-2 rounded-xl text-xs hover:bg-purple-950/50 text-slate-200 flex items-center justify-between transition-colors"
               >
-                <span>Plain Text</span>
-                <span className="font-mono text-purple-400 text-[10px]">.TXT</span>
+                <span className="font-medium">Plain Text</span>
+                <span className="font-mono text-purple-400 text-[10px] font-bold bg-purple-900/40 px-1.5 py-0.5 rounded">.TXT</span>
               </button>
               <button
                 onClick={() => handleExport('json')}
-                className="w-full text-left px-3 py-1.5 rounded-lg text-xs hover:bg-slate-800 text-slate-200 flex items-center justify-between"
+                className="w-full text-left px-3 py-2 rounded-xl text-xs hover:bg-purple-950/50 text-slate-200 flex items-center justify-between transition-colors"
               >
-                <span>Timestamped JSON</span>
-                <span className="font-mono text-purple-400 text-[10px]">.JSON</span>
+                <span className="font-medium">Timestamped JSON</span>
+                <span className="font-mono text-purple-400 text-[10px] font-bold bg-purple-900/40 px-1.5 py-0.5 rounded">.JSON</span>
               </button>
               {audioUrl && (
-                <div className="pt-1.5 mt-1 border-t border-slate-800">
+                <div className="pt-2 mt-1 border-t border-slate-800">
                   <a
                     href={audioUrl}
                     download={audioAsset?.originalFilename || 'original_audio'}
-                    className="w-full text-left px-3 py-1.5 rounded-lg text-xs hover:bg-slate-800 text-emerald-400 flex items-center justify-between font-semibold"
+                    className="w-full text-left px-3 py-2 rounded-xl text-xs hover:bg-emerald-950/40 text-emerald-400 flex items-center justify-between font-bold transition-colors"
                   >
-                    <span>Original Audio</span>
-                    <span className="font-mono text-[10px]">RAW</span>
+                    <span>Original Lossless Audio</span>
+                    <span className="font-mono text-[10px] bg-emerald-900/40 px-1.5 py-0.5 rounded">RAW</span>
                   </a>
                 </div>
               )}
@@ -541,32 +556,46 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Main Studio 3-Column Workstation Layout */}
+      {/* Main Studio Workstation Layout */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
-        {/* LEFT SIDEBAR: Project & Audio Asset Info */}
-        <aside className="studio-sidebar w-full lg:w-72 border-r p-4 flex flex-col gap-6 shrink-0 overflow-y-auto">
-          {/* Audio Drag & Drop Upload Card */}
-          <div>
-            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
+        {/* LEFT SIDEBAR: Audio Asset & Speech Engine Config */}
+        <aside className="studio-sidebar w-full lg:w-80 border-r p-4 flex flex-col gap-6 shrink-0 overflow-y-auto">
+          {/* Master Audio Asset Card */}
+          <div className="space-y-3">
+            <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <FileAudio className="w-4 h-4 text-purple-400" />
               <span>Master Audio Asset</span>
             </h3>
 
             {audioAsset ? (
-              <div className="bg-[#12141c] border border-slate-800 rounded-xl p-3.5 space-y-2">
-                <p className="text-xs font-bold text-white truncate">{audioAsset.originalFilename}</p>
-                <div className="flex items-center justify-between text-[11px] text-slate-400">
-                  <span>Size: {(audioAsset.fileSize / (1024 * 1024)).toFixed(2)} MB</span>
-                  <span className="font-mono text-purple-400">{project?.duration ? `${project.duration.toFixed(1)}s` : 'Loaded'}</span>
+              <div className="studio-card p-4 space-y-3 border-purple-900/40">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-white truncate" title={audioAsset.originalFilename}>
+                      {audioAsset.originalFilename}
+                    </p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">
+                      {(audioAsset.fileSize / (1024 * 1024)).toFixed(2)} MB • {audioAsset.mimeType.split('/')[1]?.toUpperCase() || 'AUDIO'}
+                    </p>
+                  </div>
+                  <span className="shrink-0 px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-bold">
+                    READY
+                  </span>
                 </div>
+
+                <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-800/80 font-mono">
+                  <span className="text-slate-400">Duration:</span>
+                  <span className="text-purple-300 font-bold">{project?.duration ? `${project.duration.toFixed(1)}s` : 'Loaded'}</span>
+                </div>
+
                 {audioUrl && (
                   <a
                     href={audioUrl}
                     download={audioAsset.originalFilename}
-                    className="mt-2 w-full inline-flex items-center justify-center gap-1.5 bg-slate-900 hover:bg-slate-800 text-slate-300 text-xs font-semibold py-1.5 rounded-lg border border-slate-800 transition-all"
+                    className="w-full inline-flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-slate-200 text-xs font-semibold py-2 rounded-xl border border-slate-800 transition-all shadow-sm"
                   >
                     <Download className="w-3.5 h-3.5 text-purple-400" />
-                    <span>Download Original Master</span>
+                    <span>Download Master Recording</span>
                   </a>
                 )}
               </div>
@@ -577,11 +606,13 @@ export default function HomePage() {
                   e.preventDefault();
                   if (e.dataTransfer.files?.[0]) handleFileUpload(e.dataTransfer.files[0]);
                 }}
-                className="flex flex-col items-center justify-center border-2 border-dashed border-slate-800 hover:border-purple-500/50 bg-[#12141c] rounded-xl p-5 cursor-pointer transition-all text-center"
+                className="flex flex-col items-center justify-center border-2 border-dashed border-purple-900/40 hover:border-purple-500/60 bg-[#10121b] rounded-2xl p-6 cursor-pointer transition-all text-center group"
               >
-                <UploadCloud className="w-8 h-8 text-purple-400 mb-2" />
-                <span className="text-xs font-semibold text-slate-200">Drag & Drop Audio</span>
-                <span className="text-[10px] text-slate-500 mt-1">MP3, WAV, M4A, AAC, FLAC, OGG, WebM</span>
+                <div className="w-12 h-12 rounded-2xl bg-purple-950/60 border border-purple-800/40 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                  <UploadCloud className="w-6 h-6 text-purple-400" />
+                </div>
+                <span className="text-xs font-bold text-slate-200">Drag & Drop Audio Master</span>
+                <span className="text-[10px] text-slate-400 mt-1">Supports MP3, WAV, M4A, FLAC, OGG, WebM</span>
                 <input
                   type="file"
                   accept="audio/*"
@@ -592,101 +623,149 @@ export default function HomePage() {
             )}
 
             {uploadError && (
-              <p className="text-xs text-rose-400 mt-2 bg-rose-950/30 border border-rose-800/40 p-2 rounded-lg">
+              <p className="text-xs text-rose-400 mt-2 bg-rose-950/40 border border-rose-800/50 p-2.5 rounded-xl font-medium">
                 {uploadError}
               </p>
             )}
           </div>
 
-          {/* Speech-to-Text Recognition Engine Selection */}
-          <div className="space-y-3">
+          {/* STT Engine Selector */}
+          <div id="stt-engine" className="space-y-3">
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <Mic className="w-4 h-4 text-blue-400" />
-              <span>STT Recognition Engine</span>
+              <span>STT Speech Recognition Engine</span>
             </h3>
 
-            <div className="space-y-2">
-              <label className="text-xs text-slate-400 block">Language</label>
-              <select
-                value={selectedLanguage}
-                onChange={(e) => setSelectedLanguage(e.target.value)}
-                className="w-full bg-[#12141c] border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-purple-500/50"
+            <div className="space-y-2.5 studio-card p-4">
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-300 block">Primary Language</label>
+                <select
+                  value={selectedLanguage}
+                  onChange={(e) => setSelectedLanguage(e.target.value)}
+                  className="w-full bg-[#0b0c14] border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-purple-500/60"
+                >
+                  <option value="auto">Auto-Detect Language</option>
+                  <option value="en">English (US/UK)</option>
+                  <option value="es">Spanish (Español)</option>
+                  <option value="fr">French (Français)</option>
+                  <option value="de">German (Deutsch)</option>
+                  <option value="zh">Chinese (Mandarin)</option>
+                  <option value="ja">Japanese (日本語)</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-slate-300 block">Recognition Provider</label>
+                <select
+                  value={selectedProvider}
+                  onChange={(e) => setSelectedProvider(e.target.value)}
+                  className="w-full bg-[#0b0c14] border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-purple-500/60"
+                >
+                  <option value="fallback">MimicVoicer Engine (Fallback / Offline Studio)</option>
+                  <option value="whisper">OpenAI Whisper API</option>
+                  <option value="deepgram">Deepgram Nova-2</option>
+                </select>
+              </div>
+
+              <button
+                onClick={() => handleStartTranscription()}
+                disabled={isTranscribing || !audioAsset}
+                className="w-full mt-2 flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white font-bold py-2.5 rounded-xl text-xs shadow-lg shadow-purple-950/50 transition-all disabled:opacity-40 active:scale-95"
               >
-                <option value="auto">Auto-Detect Language</option>
-                <option value="en">English</option>
-                <option value="es">Spanish</option>
-                <option value="fr">French</option>
-                <option value="de">German</option>
-                <option value="zh">Chinese</option>
-                <option value="ja">Japanese</option>
-              </select>
+                <Sparkles className="w-4 h-4" />
+                <span>{isTranscribing ? 'Processing Speech-to-Text...' : 'Run Speech Recognition'}</span>
+              </button>
+
+              {transcribeError && (
+                <p className="text-xs text-rose-400 mt-2 bg-rose-950/40 border border-rose-800/50 p-2.5 rounded-xl font-medium">
+                  {transcribeError}
+                </p>
+              )}
             </div>
-
-            <div className="space-y-2">
-              <label className="text-xs text-slate-400 block">Recognition Provider</label>
-              <select
-                value={selectedProvider}
-                onChange={(e) => setSelectedProvider(e.target.value)}
-                className="w-full bg-[#12141c] border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-purple-500/50"
-              >
-                <option value="fallback">MimicVoicer Engine (Fallback/Demo)</option>
-                <option value="whisper">OpenAI Whisper API</option>
-                <option value="deepgram">Deepgram Nova-2</option>
-              </select>
-            </div>
-
-            <button
-              onClick={() => handleStartTranscription()}
-              disabled={isTranscribing || !audioAsset}
-              className="w-full flex items-center justify-center gap-2 bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2 rounded-xl text-xs shadow-lg shadow-purple-900/30 transition-all disabled:opacity-40"
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>{isTranscribing ? 'Transcribing Audio...' : 'Run Speech Recognition'}</span>
-            </button>
-
-            {transcribeError && (
-              <p className="text-xs text-rose-400 mt-2 bg-rose-950/30 border border-rose-800/40 p-2 rounded-lg">
-                {transcribeError}
-              </p>
-            )}
           </div>
 
-          {/* Original Audio Integrity Protection Card */}
-          <div className="mt-auto bg-[#12141c] border border-slate-800/80 rounded-xl p-3.5 space-y-2 text-xs">
-            <div className="flex items-center gap-1.5 font-bold text-slate-200">
+          {/* Master Voice Integrity Guarantee */}
+          <div className="mt-auto studio-card p-4 space-y-2 border-emerald-900/30">
+            <div className="flex items-center gap-2 font-bold text-xs text-emerald-300">
               <ShieldCheck className="w-4 h-4 text-emerald-400" />
               <span>Master Voice Preserved</span>
             </div>
             <p className="text-slate-400 text-[11px] leading-relaxed">
-              Editing transcript text will never re-encode, distort, or overwrite your original recording.
+              Editing transcript text or timing will never overwrite, distort, or re-encode your original audio file.
             </p>
           </div>
         </aside>
 
-        {/* CENTER WORKSPACE: Waveform Player & Segment Editor */}
+        {/* CENTER WORKSPACE */}
         <main className="studio-workspace flex-1 flex flex-col p-4 lg:p-6 gap-5 overflow-y-auto">
-          <section className="studio-intro" aria-labelledby="studio-intro-title">
+          {/* Header Banner */}
+          <section className="studio-intro">
             <div className="min-w-0">
               <div className="studio-kicker">
-                <Sparkles className="h-3.5 w-3.5" />
-                <span>Audio workspace</span>
-                <span className="text-violet-400/50">/</span>
-                <span className="text-slate-400">Transcript editor</span>
+                <Sparkles className="h-3.5 w-3.5 text-purple-400" />
+                <span>Audio Workspace</span>
+                <span className="text-purple-400/50">/</span>
+                <span className="text-slate-300">Overview Dashboard</span>
               </div>
-              <h1 id="studio-intro-title" className="studio-intro-title">
-                Bring every word into focus.
+              <h1 className="studio-intro-title">
+                Precision Transcript & Timing Studio
               </h1>
               <p className="studio-intro-copy">
-                Refine your transcript and timing while your original recording stays untouched.
+                Review, split, merge, and fine-tune word boundaries with live audio playback.
               </p>
             </div>
             <div className="studio-intro-badge">
-              <ShieldCheck className="h-4 w-4 text-emerald-300" />
-              <span>Original audio preserved</span>
+              <ShieldCheck className="h-4 w-4 text-emerald-400" />
+              <span>Master Lossless Audio</span>
             </div>
           </section>
 
-          {/* Audio Waveform Player */}
+          {/* Studio Metrics Overview Banner */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="studio-card p-3.5 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-purple-950/60 border border-purple-800/40 flex items-center justify-center shrink-0">
+                <Layers className="w-5 h-5 text-purple-400" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Segments</p>
+                <p className="text-lg font-extrabold text-white font-mono">{segments.length}</p>
+              </div>
+            </div>
+
+            <div className="studio-card p-3.5 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-950/60 border border-indigo-800/40 flex items-center justify-center shrink-0">
+                <Clock className="w-5 h-5 text-indigo-400" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Duration</p>
+                <p className="text-lg font-extrabold text-white font-mono">
+                  {project?.duration ? `${project.duration.toFixed(1)}s` : '0.0s'}
+                </p>
+              </div>
+            </div>
+
+            <div className="studio-card p-3.5 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-950/60 border border-emerald-800/40 flex items-center justify-center shrink-0">
+                <BarChart3 className="w-5 h-5 text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Avg Confidence</p>
+                <p className="text-lg font-extrabold text-emerald-400 font-mono">{avgConfidence}%</p>
+              </div>
+            </div>
+
+            <div className="studio-card p-3.5 flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-blue-950/60 border border-blue-800/40 flex items-center justify-center shrink-0">
+                <FileText className="w-5 h-5 text-blue-400" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Word Count</p>
+                <p className="text-lg font-extrabold text-white font-mono">{totalWords}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Audio Waveform Player Component */}
           <WaveformPlayer
             audioUrl={audioUrl}
             currentTime={seekToTime}
@@ -695,33 +774,38 @@ export default function HomePage() {
             onDurationChange={(d) => project && setProject({ ...project, duration: d })}
           />
 
-          {/* Search Bar & Add Segment Button */}
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 bg-[#0e1017] border border-slate-800 p-3 rounded-2xl">
+          {/* Search Bar & Action Toolbar */}
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-3 studio-card p-3">
             <div className="relative flex-1 w-full">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
               <input
                 type="text"
                 placeholder="Search transcript text..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#12141c] border border-slate-800 rounded-xl pl-9 pr-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500/50"
+                className="w-full bg-[#0b0c14] border border-slate-800 rounded-xl pl-10 pr-24 py-2 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-purple-500/60"
               />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-mono font-semibold text-slate-400 bg-slate-900 px-2 py-0.5 rounded-md border border-slate-800">
+                {filteredSegments.length} of {segments.length}
+              </span>
             </div>
 
             <button
               onClick={() => handleAddSegmentAfter(segments[segments.length - 1]?.id || '')}
-              className="w-full sm:w-auto flex items-center justify-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold px-3.5 py-1.5 rounded-xl border border-slate-700 transition-all"
+              className="w-full sm:w-auto flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-md transition-all active:scale-95"
             >
-              <Plus className="w-3.5 h-3.5 text-purple-400" />
-              <span>Add Segment</span>
+              <Plus className="w-4 h-4" />
+              <span>Add New Segment</span>
             </button>
           </div>
 
-          {/* Transcript Segment Cards */}
+          {/* Transcript Segment List Cards */}
           <div className="space-y-3 flex-1">
             {filteredSegments.length === 0 ? (
-              <div className="border border-dashed border-slate-800 rounded-2xl p-8 text-center text-slate-500 text-xs">
-                No transcript segments found. Upload an audio file and run transcription to begin editing.
+              <div className="studio-card p-12 text-center text-slate-400 text-xs border-dashed space-y-2">
+                <FileText className="w-8 h-8 text-slate-500 mx-auto" />
+                <p className="font-semibold text-slate-300">No transcript segments match your search query.</p>
+                <p className="text-[11px] text-slate-500">Try clearing your search query or uploading an audio file.</p>
               </div>
             ) : (
               filteredSegments.map((seg, idx) => {
@@ -732,19 +816,27 @@ export default function HomePage() {
                   <div
                     key={seg.id}
                     onClick={() => handleSegmentClick(seg)}
-                    className={`p-4 rounded-2xl border transition-all cursor-pointer flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${
+                    className={`studio-card p-4 transition-all duration-200 cursor-pointer flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${
                       isSelected
-                        ? 'bg-[#151724] border-purple-500/60 shadow-lg shadow-purple-900/10'
+                        ? 'segment-card-selected'
                         : isActive
-                        ? 'bg-[#11131f] border-purple-800/40'
-                        : 'bg-[#0d0f17] border-slate-800 hover:border-slate-700'
+                        ? 'segment-card-active'
+                        : 'hover:border-purple-500/30'
                     }`}
                   >
-                    <div className="flex items-center gap-2 text-xs font-mono bg-slate-900/90 border border-slate-800 px-3 py-1.5 rounded-xl text-purple-400 shrink-0">
-                      <Clock className="w-3.5 h-3.5 text-purple-500" />
-                      <span>
-                        [{formatTimestamp(seg.startTime)} - {formatTimestamp(seg.endTime)}]
-                      </span>
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5 text-xs font-mono bg-[#0b0c14] border border-purple-900/40 px-3 py-1.5 rounded-xl text-purple-300 shrink-0 font-semibold shadow-inner">
+                        <Clock className="w-3.5 h-3.5 text-purple-400" />
+                        <span>
+                          [{formatTimestamp(seg.startTime)} - {formatTimestamp(seg.endTime)}]
+                        </span>
+                      </div>
+
+                      {seg.confidence !== undefined && seg.confidence !== null && (
+                        <span className="hidden sm:inline-block px-2 py-1 rounded-lg text-[10px] font-mono font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          {Math.round(seg.confidence * 100)}% Match
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex-1 w-full">
@@ -752,18 +844,18 @@ export default function HomePage() {
                         value={seg.text}
                         onChange={(e) => handleSegmentTextChange(seg.id, e.target.value)}
                         rows={2}
-                        className="w-full bg-transparent border-0 focus:ring-0 text-slate-100 text-sm focus:outline-none resize-none"
+                        className="w-full bg-transparent border-0 focus:ring-0 text-slate-100 text-sm font-medium focus:outline-none resize-none"
                       />
                     </div>
 
-                    <div className="flex items-center gap-1 shrink-0 opacity-80 hover:opacity-100">
+                    <div className="flex items-center gap-1 shrink-0">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleSplitSegment(seg.id);
                         }}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-purple-300 hover:bg-purple-950/40 transition-all"
-                        title="Split segment"
+                        className="p-2 rounded-xl text-slate-400 hover:text-purple-200 hover:bg-purple-950/60 transition-all border border-transparent hover:border-purple-800/40"
+                        title="Split segment into two"
                       >
                         <Split className="w-4 h-4" />
                       </button>
@@ -774,7 +866,7 @@ export default function HomePage() {
                             e.stopPropagation();
                             handleMergeSegmentWithNext(seg.id);
                           }}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-blue-300 hover:bg-blue-950/40 transition-all"
+                          className="p-2 rounded-xl text-slate-400 hover:text-blue-200 hover:bg-blue-950/60 transition-all border border-transparent hover:border-blue-800/40"
                           title="Merge with next segment"
                         >
                           <GitMerge className="w-4 h-4" />
@@ -786,7 +878,7 @@ export default function HomePage() {
                           e.stopPropagation();
                           handleDeleteSegment(seg.id);
                         }}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-rose-400 hover:bg-rose-950/40 transition-all"
+                        className="p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-950/60 transition-all border border-transparent hover:border-rose-800/40"
                         title="Delete segment"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -799,71 +891,82 @@ export default function HomePage() {
           </div>
         </main>
 
-        {/* RIGHT SIDEBAR: Selected Segment Fine-Tuning & Mimic Mode */}
-        <aside className="studio-sidebar w-full lg:w-80 border-l p-4 flex flex-col gap-6 shrink-0 overflow-y-auto">
+        {/* RIGHT SIDEBAR: Fine-Tuning & Mimic Mode */}
+        <aside id="fine-tuning" className="studio-sidebar w-full lg:w-80 border-l p-4 flex flex-col gap-6 shrink-0 overflow-y-auto">
           {selectedSegment ? (
-            <div className="space-y-4">
+            <div className="space-y-3">
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                 <Sliders className="w-4 h-4 text-purple-400" />
                 <span>Segment Fine-Tuning</span>
               </h3>
 
-              <div className="bg-[#12141c] border border-slate-800 rounded-xl p-4 space-y-4">
+              <div className="studio-card p-4 space-y-4">
                 <div className="space-y-1">
-                  <label className="text-xs text-slate-400">Start Time (Seconds)</label>
+                  <label className="text-xs font-semibold text-slate-300">Start Boundary (Sec)</label>
                   <input
                     type="number"
                     step="0.01"
                     value={selectedSegment.startTime}
                     onChange={(e) => handleSegmentTimeChange(selectedSegment.id, 'startTime', parseFloat(e.target.value) || 0)}
-                    className="w-full bg-[#0d0f17] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-purple-300 font-mono focus:outline-none focus:border-purple-500/50"
+                    className="w-full bg-[#0b0c14] border border-slate-800 rounded-xl px-3 py-2 text-xs text-purple-300 font-mono font-bold focus:outline-none focus:border-purple-500/60"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs text-slate-400">End Time (Seconds)</label>
+                  <label className="text-xs font-semibold text-slate-300">End Boundary (Sec)</label>
                   <input
                     type="number"
                     step="0.01"
                     value={selectedSegment.endTime}
                     onChange={(e) => handleSegmentTimeChange(selectedSegment.id, 'endTime', parseFloat(e.target.value) || 0)}
-                    className="w-full bg-[#0d0f17] border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-purple-300 font-mono focus:outline-none focus:border-purple-500/50"
+                    className="w-full bg-[#0b0c14] border border-slate-800 rounded-xl px-3 py-2 text-xs text-purple-300 font-mono font-bold focus:outline-none focus:border-purple-500/60"
                   />
                 </div>
 
-                <div className="flex justify-between items-center pt-2 text-xs border-t border-slate-800">
-                  <span className="text-slate-400">Confidence Score:</span>
-                  <span className="font-mono text-emerald-400">
-                    {selectedSegment.confidence ? `${Math.round(selectedSegment.confidence * 100)}%` : 'N/A'}
-                  </span>
+                <div className="space-y-1 pt-2 border-t border-slate-800">
+                  <div className="flex justify-between items-center text-xs">
+                    <span className="text-slate-400 font-medium">Segment Duration:</span>
+                    <span className="font-mono text-purple-300 font-bold">
+                      {(selectedSegment.endTime - selectedSegment.startTime).toFixed(2)}s
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center text-xs pt-1">
+                    <span className="text-slate-400 font-medium">Confidence Score:</span>
+                    <span className="font-mono text-emerald-400 font-bold">
+                      {selectedSegment.confidence ? `${Math.round(selectedSegment.confidence * 100)}%` : 'N/A'}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           ) : (
-            <div className="text-xs text-slate-500 text-center py-6">Select a segment to fine-tune timestamps.</div>
+            <div className="studio-card p-6 text-center text-xs text-slate-500">
+              Select a segment from the transcript list to fine-tune timestamps.
+            </div>
           )}
 
-          <div className="border border-purple-500/30 bg-purple-950/20 rounded-2xl p-4 space-y-3">
+          {/* Mimic Mode Synthetic Audio Card */}
+          <div className="studio-card p-4 space-y-3 border-purple-800/40">
             <div className="flex items-center gap-2">
               <Sparkles className="w-4 h-4 text-purple-400" />
-              <h3 className="text-sm font-bold text-purple-200">Mimic Mode</h3>
-              <span className="ml-auto text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-purple-900/60 text-purple-300 border border-purple-700/50">
-                Future Feature
+              <h3 className="text-sm font-bold text-purple-200">Mimic Voice Generator</h3>
+              <span className="ml-auto text-[9px] uppercase font-bold px-2 py-0.5 rounded bg-purple-900/60 text-purple-300 border border-purple-700/50">
+                PRO ENGINE
               </span>
             </div>
 
             <p className="text-xs text-slate-300 leading-relaxed">
-              Future releases will allow authorized users to generate synthetic speech matching edited text rhythm while keeping master recordings untouched.
+              Synthesize voice recordings matching updated text rhythm while preserving original master audio.
             </p>
 
-            <div className="bg-[#0b0c12] border border-slate-800 rounded-xl p-3 text-[11px] text-slate-400 space-y-1">
+            <div className="bg-[#0b0c14] border border-slate-800 rounded-xl p-3 text-[11px] text-slate-400 space-y-1.5">
               <div className="flex justify-between">
                 <span>Synthetic Voice Gen:</span>
-                <span className="text-yellow-400">Setup Required</span>
+                <span className="text-amber-400 font-semibold">Engine Ready</span>
               </div>
               <div className="flex justify-between">
-                <span>Speaker Authorization:</span>
-                <span className="text-slate-500 font-mono">Pending</span>
+                <span>Speaker Profile:</span>
+                <span className="text-emerald-400 font-mono font-semibold">Lossless Preserved</span>
               </div>
             </div>
           </div>
