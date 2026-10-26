@@ -1,8 +1,13 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: dark;
+  --background: #080910;
+  --foreground: #f4f2ff;
+  --surface: #10111b;
+  --surface-raised: #151624;
+  --line: rgb(151 143 181 / 14%);
+  --accent: #a78bfa;
 }
 
 @theme inline {
@@ -12,15 +17,188 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+  background: var(--background);
 }
 
 body {
+  min-height: 100%;
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+  font-feature-settings: "ss01" on;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  color: #fff;
+  background: rgb(139 92 246 / 45%);
+}
+
+* {
+  scrollbar-color: #343044 transparent;
+  scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+*::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background: #343044;
+  background-clip: padding-box;
+}
+
+button,
+a,
+input,
+textarea,
+select {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:focus-visible {
+  outline: 2px solid rgb(167 139 250 / 85%);
+  outline-offset: 3px;
+}
+
+.studio-shell {
+  position: relative;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 50% -18%, rgb(115 82 190 / 20%), transparent 46rem),
+    radial-gradient(ellipse at 100% 54%, rgb(47 74 133 / 9%), transparent 34rem),
+    linear-gradient(145deg, #0b0b13 0%, #080910 48%, #0a0b12 100%);
+}
+
+.studio-topbar {
+  background: linear-gradient(100deg, rgb(18 17 28 / 96%), rgb(13 14 22 / 94%));
+  border-color: var(--line);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 2%), 0 16px 40px rgb(0 0 0 / 12%);
+}
+
+.studio-sidebar {
+  background: linear-gradient(180deg, rgb(17 17 27 / 94%), rgb(13 14 22 / 90%));
+  border-color: var(--line);
+}
+
+.studio-workspace {
+  background:
+    radial-gradient(ellipse at 50% 0%, rgb(105 76 171 / 7%), transparent 38rem),
+    transparent;
+}
+
+.studio-intro {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  overflow: hidden;
+  padding: 1.25rem 1.5rem;
+  border: 1px solid rgb(167 139 250 / 16%);
+  border-radius: 1.25rem;
+  background:
+    radial-gradient(ellipse at 90% 50%, rgb(124 87 218 / 13%), transparent 24rem),
+    linear-gradient(115deg, rgb(24 22 39 / 92%), rgb(16 17 27 / 95%) 66%);
+  box-shadow: 0 18px 48px rgb(0 0 0 / 16%), inset 0 1px 0 rgb(255 255 255 / 3%);
+}
+
+.studio-intro::after {
+  position: absolute;
+  right: 9%;
+  bottom: -5.5rem;
+  width: 15rem;
+  height: 8rem;
+  border: 1px solid rgb(167 139 250 / 12%);
+  border-radius: 50%;
+  content: "";
+  pointer-events: none;
+  transform: rotate(-18deg);
+}
+
+.studio-kicker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #c4b5fd;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.studio-intro-title {
+  margin-top: 0.45rem;
+  color: #faf9ff;
+  font-size: clamp(1.35rem, 2vw, 1.75rem);
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 1.15;
+}
+
+.studio-intro-copy {
+  margin-top: 0.4rem;
+  color: #a6a2b5;
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+.studio-intro-badge {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid rgb(167 139 250 / 16%);
+  border-radius: 0.8rem;
+  background: rgb(10 10 17 / 48%);
+  color: #d6d1e3;
+  font-size: 0.73rem;
+  font-weight: 600;
+}
+
+.studio-card {
+  border-color: var(--line);
+  background: linear-gradient(145deg, rgb(22 22 34 / 96%), rgb(15 16 25 / 96%));
+  box-shadow: 0 14px 36px rgb(0 0 0 / 17%), inset 0 1px 0 rgb(255 255 255 / 2%);
+}
+
+@media (max-width: 640px) {
+  .studio-intro {
+    align-items: flex-start;
+    padding: 1.1rem;
+  }
+
+  .studio-intro-badge {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .studio-intro {
+    animation: studio-appear 500ms ease-out both;
+  }
+
+  @keyframes studio-appear {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 }

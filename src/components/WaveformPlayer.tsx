@@ -130,7 +130,7 @@ export function WaveformPlayer({
   const speeds = [0.5, 0.75, 1.0, 1.25, 1.5, 2.0];
 
   return (
-    <div className="bg-[#0e1017] border border-slate-800 rounded-2xl p-4 shadow-xl flex flex-col gap-4">
+    <div className="studio-card rounded-2xl border p-4 flex flex-col gap-4">
       <div className="relative bg-[#08090d] rounded-xl p-3 border border-slate-900 overflow-hidden">
         {!audioUrl && (
           <div className="h-[70px] flex items-center justify-center text-slate-500 text-sm">

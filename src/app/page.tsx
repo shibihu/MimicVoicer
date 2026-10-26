@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useCallback, useEffect, useState, useRef } from 'react';
 import {
   UploadCloud,
   Play,
@@ -55,6 +55,31 @@ interface Project {
   segments: Segment[];
 }
 
+async function readJsonResponse<T>(response: Response, action: string): Promise<T> {
+  const body = await response.text();
+
+  if (!body.trim()) {
+    throw new Error(`${action} returned an empty response (HTTP ${response.status}).`);
+  }
+
+  let data: T;
+  try {
+    data = JSON.parse(body) as T;
+  } catch {
+    throw new Error(`${action} returned invalid JSON (HTTP ${response.status}).`);
+  }
+
+  if (!response.ok) {
+    const error =
+      typeof data === 'object' && data !== null && 'error' in data && typeof data.error === 'string'
+        ? data.error
+        : `${action} failed (HTTP ${response.status}).`;
+    throw new Error(error);
+  }
+
+  return data;
+}
+
 export default function HomePage() {
   const [project, setProject] = useState<Project | null>(null);
   const [segments, setSegments] = useState<Segment[]>([]);
@@ -75,17 +100,19 @@ export default function HomePage() {
 
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [transcribeError, setTranscribeError] = useState<string | null>(null);
+  const [projectInitError, setProjectInitError] = useState<string | null>(null);
 
   const autosaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  useEffect(() => {
-    initDefaultProject();
-  }, []);
-
-  const initDefaultProject = async () => {
+  const initDefaultProject = useCallback(async () => {
     try {
       const res = await fetch('/api/projects');
-      const projects = await res.json();
+      const projects = await readJsonResponse<Project[]>(res, 'Loading projects');
+      if (!Array.isArray(projects)) {
+        throw new Error('The projects API returned an invalid response.');
+      }
+      setProjectInitError(null);
+
       if (Array.isArray(projects) && projects.length > 0) {
         const defaultProj = projects[0];
         setProject(defaultProj);
@@ -101,7 +128,7 @@ export default function HomePage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: 'MimicVoicer Main Studio Session' }),
         });
-        const newProj = await createRes.json();
+        const newProj = await readJsonResponse<Project>(createRes, 'Creating a project');
         setProject(newProj);
         setSegments(newProj.segments || []);
         setHistory([newProj.segments || []]);
@@ -109,8 +136,15 @@ export default function HomePage() {
       }
     } catch (err) {
       console.error('Project initialization error:', err);
+      setProjectInitError(
+        err instanceof Error ? err.message : 'Unable to initialize a project. Please try again.'
+      );
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    void initDefaultProject();
+  }, [initDefaultProject]);
 
   const updateSegmentsWithHistory = (newSegments: Segment[]) => {
     const updatedHistory = history.slice(0, historyIndex + 1);
@@ -367,9 +401,24 @@ export default function HomePage() {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-[#090a0f] text-slate-100 min-h-screen">
+    <div className="studio-shell flex-1 flex flex-col text-slate-100 min-h-screen">
+      {projectInitError && (
+        <div
+          role="alert"
+          className="flex items-center justify-between gap-4 border-b border-rose-900/60 bg-rose-950/40 px-4 py-3 text-sm text-rose-200 lg:px-6"
+        >
+          <span>Unable to load the studio project: {projectInitError}</span>
+          <button
+            type="button"
+            onClick={initDefaultProject}
+            className="shrink-0 rounded-lg border border-rose-700/60 px-3 py-1.5 font-semibold hover:bg-rose-900/40"
+          >
+            Retry
+          </button>
+        </div>
+      )}
       {/* Studio Header Bar */}
-      <div className="bg-[#0e1017] border-b border-slate-800 px-4 lg:px-6 py-3 flex flex-wrap items-center justify-between gap-4">
+      <div className="studio-topbar border-b px-4 lg:px-6 py-3 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <input
             type="text"
@@ -495,7 +544,7 @@ export default function HomePage() {
       {/* Main Studio 3-Column Workstation Layout */}
       <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
         {/* LEFT SIDEBAR: Project & Audio Asset Info */}
-        <aside className="w-full lg:w-72 bg-[#0e1017] border-r border-slate-800 p-4 flex flex-col gap-6 shrink-0 overflow-y-auto">
+        <aside className="studio-sidebar w-full lg:w-72 border-r p-4 flex flex-col gap-6 shrink-0 overflow-y-auto">
           {/* Audio Drag & Drop Upload Card */}
           <div>
             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center gap-1.5">
@@ -615,7 +664,28 @@ export default function HomePage() {
         </aside>
 
         {/* CENTER WORKSPACE: Waveform Player & Segment Editor */}
-        <main className="flex-1 flex flex-col p-4 lg:p-6 gap-6 overflow-y-auto bg-[#090a0f]">
+        <main className="studio-workspace flex-1 flex flex-col p-4 lg:p-6 gap-5 overflow-y-auto">
+          <section className="studio-intro" aria-labelledby="studio-intro-title">
+            <div className="min-w-0">
+              <div className="studio-kicker">
+                <Sparkles className="h-3.5 w-3.5" />
+                <span>Audio workspace</span>
+                <span className="text-violet-400/50">/</span>
+                <span className="text-slate-400">Transcript editor</span>
+              </div>
+              <h1 id="studio-intro-title" className="studio-intro-title">
+                Bring every word into focus.
+              </h1>
+              <p className="studio-intro-copy">
+                Refine your transcript and timing while your original recording stays untouched.
+              </p>
+            </div>
+            <div className="studio-intro-badge">
+              <ShieldCheck className="h-4 w-4 text-emerald-300" />
+              <span>Original audio preserved</span>
+            </div>
+          </section>
+
           {/* Audio Waveform Player */}
           <WaveformPlayer
             audioUrl={audioUrl}
@@ -730,7 +800,7 @@ export default function HomePage() {
         </main>
 
         {/* RIGHT SIDEBAR: Selected Segment Fine-Tuning & Mimic Mode */}
-        <aside className="w-full lg:w-80 bg-[#0e1017] border-l border-slate-800 p-4 flex flex-col gap-6 shrink-0 overflow-y-auto">
+        <aside className="studio-sidebar w-full lg:w-80 border-l p-4 flex flex-col gap-6 shrink-0 overflow-y-auto">
           {selectedSegment ? (
             <div className="space-y-4">
               <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
