@@ -42,19 +42,36 @@ export class WhisperTranscriptionProvider implements ITranscriptionProvider {
     }
 
     const data = await res.json();
+    const duration = data.duration || 0;
 
-    const segments: TranscribeResultSegment[] = (data.segments || []).map((seg: any, index: number) => ({
+    let segments: TranscribeResultSegment[] = (data.segments || []).map((seg: any, index: number) => ({
       id: `segment_${(index + 1).toString().padStart(3, '0')}`,
-      start: seg.start,
-      end: seg.end,
+      start: Number(seg.start.toFixed(3)),
+      end: Number(seg.end.toFixed(3)),
       text: seg.text.trim(),
-      confidence: seg.no_speech_prob ? 1 - seg.no_speech_prob : null,
+      confidence: seg.no_speech_prob ? Number((1 - seg.no_speech_prob).toFixed(2)) : null,
     }));
 
+    // Fallback if data.segments is empty but data.text is present
+    const fullText = (data.text || '').trim();
+    if (segments.length === 0 && fullText) {
+      const sentenceRegex = /[^.!?\n]+[.!?\n]+/g;
+      const matches = fullText.match(sentenceRegex) || [fullText];
+      const segmentDuration = duration > 0 ? duration / matches.length : 3.0;
+
+      segments = matches.map((sentence: string, idx: number) => ({
+        id: `segment_${(idx + 1).toString().padStart(3, '0')}`,
+        start: Number((idx * segmentDuration).toFixed(3)),
+        end: Number(((idx + 1) * segmentDuration).toFixed(3)),
+        text: sentence.trim(),
+        confidence: 0.95,
+      }));
+    }
+
     return {
-      text: data.text || '',
+      text: fullText,
       language: data.language || language || 'en',
-      duration: data.duration || (segments.length > 0 ? segments[segments.length - 1].end : 0),
+      duration: duration || (segments.length > 0 ? segments[segments.length - 1].end : 0),
       segments,
       provider: 'whisper',
     };
